@@ -9,8 +9,8 @@ import javax.xml.namespace.QName
 import jakarta.xml.ws.handler.MessageContext
 import jakarta.xml.ws.handler.Handler
 import jakarta.xml.ws.soap.SOAPBinding
-
 import org.apache.cxf.BusFactory
+import org.apache.cxf.interceptor.AbstractLoggingInterceptor.DEFAULT_LIMIT
 import org.apache.cxf.interceptor.LoggingOutInterceptor
 import org.apache.cxf.interceptor.LoggingInInterceptor
 import org.apache.cxf.transport.ConduitInitiatorManager
@@ -62,8 +62,9 @@ abstract class PlaySoapClient @Inject() (apacheCxfBus: ApacheCxfBus, configurati
     val factory = createFactory
 
     if (readConfig(portName, _.getOptional[Boolean]("debugLog"), false)) {
-      factory.getInInterceptors.add(new LoggingInInterceptor)
-      factory.getOutInterceptors.add(new LoggingOutInterceptor)
+      val logSize = readConfig(portName, _.getOptional[Long]("logSize").map(size => size.toInt), DEFAULT_LIMIT)
+      factory.getInInterceptors.add(new LoggingInInterceptor(logSize))
+      factory.getOutInterceptors.add(new LoggingOutInterceptor(logSize))
     }
     factory.setServiceClass(ct.runtimeClass)
     val address = readConfig(portName, _.getOptional[String]("address"), defaultAddress)
